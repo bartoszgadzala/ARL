@@ -36,7 +36,7 @@ public class AudioRecordFactory {
                     int audioFormat = AUDIO_FORMATS[k];
                     int bufferSize = AudioRecord.getMinBufferSize(sampleRateInHz, channelConfig, audioFormat);
                     if (bufferSize > 0) {
-                        audioRecord = new AudioRecord(audioSource, sampleRateInHz, channelConfig, audioFormat, bufferSize);
+                        audioRecord = new AudioRecord(audioSource, sampleRateInHz, channelConfig, audioFormat, 2 * bufferSize);
                         if (audioRecord.getState() == AudioRecord.STATE_INITIALIZED) {
                             return audioRecord;
                         }
