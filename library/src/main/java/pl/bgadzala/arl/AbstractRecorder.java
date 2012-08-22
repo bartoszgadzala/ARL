@@ -29,6 +29,11 @@ public abstract class AbstractRecorder {
      */
     private short[] mPcmBuffer;
 
+    /**
+     * <code>true</code> if recording is started
+     */
+    private boolean mStarted;
+
     public AbstractRecorder(AudioRecord audioRecord, OutputStream out) {
         if (audioRecord == null) {
             throw new NullPointerException("Audio recorder is mandatory");
@@ -42,15 +47,17 @@ public abstract class AbstractRecorder {
     }
 
     public void start() {
-        // TODO implement start
+        mStarted = true;
     }
 
     public void stop() {
-        // TODO implement stop
+        mStarted = false;
     }
 
     public void release() {
-        // TODO implement release
+        stop();
+        mAudioRecord = null;
+
     }
 
     /**
