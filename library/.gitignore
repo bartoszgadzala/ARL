@@ -1,2 +1,5 @@
+.settings
 gen
 bin
+.classpath
+.project
