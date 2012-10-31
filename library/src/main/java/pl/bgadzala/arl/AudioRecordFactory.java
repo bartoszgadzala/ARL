@@ -22,18 +22,14 @@ public class AudioRecordFactory {
      * Creates audio recorder for best quality which is available on runtime platform.
      *
      * @param audioSource source of audio (could be {@link MediaRecorder.AudioSource#MIC} for example)
-     *
      * @return best available audio recorder or <code>null</code> if recorder can not be created
      */
     public static AudioRecord createForBestQuality(int audioSource) {
         AudioRecord audioRecord = null;
 
-        for (int i = 0; i < SAMPLE_RATES_IN_HZ.length; i++) {
-            int sampleRateInHz = SAMPLE_RATES_IN_HZ[i];
-            for (int j = 0; j < CHANNEL_CONFIGS.length; j++) {
-                int channelConfig = CHANNEL_CONFIGS[j];
-                for (int k = 0; k < AUDIO_FORMATS.length; k++) {
-                    int audioFormat = AUDIO_FORMATS[k];
+        for (int sampleRateInHz : SAMPLE_RATES_IN_HZ) {
+            for (int channelConfig : CHANNEL_CONFIGS) {
+                for (int audioFormat : AUDIO_FORMATS) {
                     int bufferSize = AudioRecord.getMinBufferSize(sampleRateInHz, channelConfig, audioFormat);
                     if (bufferSize > 0) {
                         audioRecord = new AudioRecord(audioSource, sampleRateInHz, channelConfig, audioFormat, 2 * bufferSize);

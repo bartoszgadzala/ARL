@@ -2,62 +2,101 @@ package pl.bgadzala.arl;
 
 import android.media.AudioFormat;
 import android.media.AudioRecord;
+import android.os.Process;
 
-import java.io.OutputStream;
+import java.io.RandomAccessFile;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Abstract audio recorder which is format unaware. Handles state switching
  * and reading audio data from platform audio recorder.
  * <p/>
- * <p>Stopped recording could be started until it's released. Such behaviour
+ * Stopped recording could be started until recorder is released. Such behaviour
  * allows to implement a pause function which is unavailable in {@link AudioRecord}.
  *
  * @author Bartosz Gadzała
  */
-public abstract class AbstractRecorder {
-
-    /**
-     * Wrapped audio recorder.
-     */
-    private AudioRecord mAudioRecord;
-    /**
-     * Output stream for recorded audio.
-     */
-    private OutputStream mOutputStream;
-    /**
-     * Buffer for raw PCM data.
-     */
-    private short[] mPcmBuffer;
+public abstract class AbstractRecorder implements Runnable {
 
     /**
      * <code>true</code> if recording is started
      */
-    private boolean mStarted;
+    private AtomicBoolean mStarted = new AtomicBoolean(false);
+    /**
+     * Controls recording task - setting to <code>false</code> finishes tasks.
+     */
+    private AtomicBoolean mRecording = new AtomicBoolean(false);
 
-    public AbstractRecorder(AudioRecord audioRecord, OutputStream out) {
+    /**
+     * Wrapped audio recorder.
+     */
+    protected AudioRecord mAudioRecord;
+    /**
+     * Output stream for recorded audio.
+     */
+    protected RandomAccessFile mOutput;
+    /**
+     * Buffer for raw PCM data.
+     */
+    protected byte[] mPcmBuffer;
+
+    public AbstractRecorder(AudioRecord audioRecord, RandomAccessFile out) {
         if (audioRecord == null) {
             throw new NullPointerException("Audio recorder is mandatory");
         } else if (out == null) {
-            throw new NullPointerException("Output stream is mandatory");
+            throw new NullPointerException("Output file is mandatory");
         }
 
         mAudioRecord = audioRecord;
-        mOutputStream = out;
+        mOutput = out;
         mPcmBuffer = createPCMBuffer();
     }
 
     public void start() {
-        mStarted = true;
+        mStarted.set(true);
+        if (!mRecording.getAndSet(true)) {
+            Thread t = new Thread(this, "AudioRecorderTask");
+            t.start();
+        }
     }
 
     public void stop() {
-        mStarted = false;
+        mStarted.set(false);
     }
 
     public void release() {
+        mRecording.set(false);
         stop();
         mAudioRecord = null;
+    }
 
+    @Override
+    public void run() {
+        startAudioRecorder();
+        onRecordingStarted();
+
+        try {
+            int readSize;
+            while (mRecording.get()) {
+                if (mStarted.get()) {
+                    readSize = mAudioRecord.read(mPcmBuffer, 0, mPcmBuffer.length);
+                    if (readSize < 0) {
+                        throw new IllegalStateException("AudioRecorder returned [" + readSize + "] bytes");
+                    } else if (readSize > 0) {
+                        onSampleRead(mPcmBuffer, readSize);
+                    }
+                } else {
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException ex) {
+                        break;
+                    }
+                }
+            }
+        } finally {
+            onRecordingFinished();
+            stopAudioRecorder();
+        }
     }
 
     /**
@@ -65,9 +104,9 @@ public abstract class AbstractRecorder {
      *
      * @return PCM buffer
      */
-    protected short[] createPCMBuffer() {
+    protected byte[] createPCMBuffer() {
         int audioFormat = mAudioRecord.getAudioFormat() == AudioFormat.ENCODING_PCM_16BIT ? 16 : 8;
-        return new short[mAudioRecord.getSampleRate() * (audioFormat / 8) * mAudioRecord.getChannelCount() * 5];
+        return new byte[mAudioRecord.getSampleRate() * (audioFormat / 8) * mAudioRecord.getChannelCount() * 5];
     }
 
     /**
@@ -82,5 +121,33 @@ public abstract class AbstractRecorder {
             throw new IllegalStateException("Invalid audio recorder - cannot compute minimum buffer size");
         }
         return minBufferSize;
+    }
+
+    protected abstract void onRecordingStarted();
+
+    protected abstract void onSampleRead(byte[] buffer, int size);
+
+    protected abstract void onRecordingFinished();
+
+    /**
+     * Starts audio recorder.
+     */
+    private void startAudioRecorder() {
+        android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
+
+        if (mAudioRecord != null && mAudioRecord.getRecordingState() != AudioRecord.RECORDSTATE_RECORDING) {
+            mAudioRecord.startRecording();
+        }
+    }
+
+    /**
+     * Stops audio recorder.
+     */
+    private void stopAudioRecorder() {
+        if (mAudioRecord != null && mAudioRecord.getRecordingState() != AudioRecord.RECORDSTATE_STOPPED) {
+            mAudioRecord.stop();
+        }
+
+        Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
     }
 }
