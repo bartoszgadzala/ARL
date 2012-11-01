@@ -1,4 +1,7 @@
 target/
 classes/
+.settings/
 .idea/
 *.iml
+.project
+.classpath
