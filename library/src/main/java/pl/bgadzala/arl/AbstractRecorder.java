@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * @author Bartosz Gadzała
  */
-public abstract class AbstractRecorder implements Runnable {
+public abstract class AbstractRecorder implements Recorder, Runnable {
 
     /**
      * <code>true</code> if recording is started
@@ -52,7 +52,13 @@ public abstract class AbstractRecorder implements Runnable {
         mPcmBuffer = createPCMBuffer();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void start() {
+        if (mAudioRecord == null) {
+            throw new IllegalStateException("Audio recorder is already stopped");
+        }
         mStarted.set(true);
         if (!mRecording.getAndSet(true)) {
             Thread t = new Thread(this, "AudioRecorderTask");
@@ -60,16 +66,32 @@ public abstract class AbstractRecorder implements Runnable {
         }
     }
 
-    public void stop() {
+    /**
+     * {@inheritDoc}
+     */
+    public void pause() {
+        if (mAudioRecord == null) {
+            throw new IllegalStateException("Audio recorder is already stopped");
+        }
         mStarted.set(false);
     }
 
-    public void release() {
+    /**
+     * {@inheritDoc}
+     */
+    public void stop() {
+        if (mAudioRecord == null) {
+            throw new IllegalStateException("Audio recorder is already stopped");
+        }
         mRecording.set(false);
-        stop();
+        pause();
+        mAudioRecord.release();
         mAudioRecord = null;
     }
 
+    /**
+     * Reads audio to PCM buffer in a separate thread.
+     */
     @Override
     public void run() {
         startAudioRecorder();
