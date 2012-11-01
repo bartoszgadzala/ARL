@@ -85,8 +85,7 @@ public abstract class AbstractRecorder implements Recorder, Runnable {
         }
         mRecording.set(false);
         pause();
-        mAudioRecord.release();
-        mAudioRecord = null;
+        stopAudioRecorder();
     }
 
     /**
@@ -117,7 +116,6 @@ public abstract class AbstractRecorder implements Recorder, Runnable {
             }
         } finally {
             onRecordingFinished();
-            stopAudioRecorder();
         }
     }
 
@@ -168,6 +166,8 @@ public abstract class AbstractRecorder implements Recorder, Runnable {
     private void stopAudioRecorder() {
         if (mAudioRecord != null && mAudioRecord.getRecordingState() != AudioRecord.RECORDSTATE_STOPPED) {
             mAudioRecord.stop();
+            mAudioRecord.release();
+            mAudioRecord = null;
         }
 
         Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);

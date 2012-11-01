@@ -11,15 +11,27 @@ public enum Format {
     /**
      * Waveform Audio File Format.
      */
-    WAV(new WavRecorderFactory());
+    WAV(new WavRecorderFactory(), "wav");
 
     /**
      * Factory for format specific audio recorders.
      */
     private RecorderFactory mFactory;
+    /**
+     * Default file extension for this format.
+     */
+    private String mFileExtension;
 
-    private Format(RecorderFactory factory) {
+    private Format(RecorderFactory factory, String fileExtension) {
         mFactory = factory;
+        mFileExtension = fileExtension;
+    }
+
+    /**
+     * @return default file extension for this format
+     */
+    public String getFileExtension() {
+        return mFileExtension;
     }
 
     /**
