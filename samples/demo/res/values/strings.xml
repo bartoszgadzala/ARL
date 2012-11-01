@@ -3,4 +3,10 @@
 
     <string name="app_name">ARL Demo</string>
 
+    <string name="btnLabelStart">Start</string>
+
+    <string name="btnLabelStop">Stop</string>
+
+    <string name="btnLabelPause">Pause</string>
+
 </resources>
