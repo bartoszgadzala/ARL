@@ -93,8 +93,6 @@ public abstract class AbstractRecorder implements Recorder, Runnable {
             throw new IllegalStateException("Audio recorder is already stopped");
         }
         mRecording.set(false);
-        pause();
-        stopAudioRecorder();
     }
 
     /**
@@ -152,6 +150,7 @@ public abstract class AbstractRecorder implements Recorder, Runnable {
             }
         } finally {
             onRecordingFinished();
+            stopAudioRecorder();
         }
     }
 
@@ -207,6 +206,10 @@ public abstract class AbstractRecorder implements Recorder, Runnable {
         }
 
         Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
+        
+        mRecording.set(false);
+        mStarted.set(false);
+        mAmplitude = 0;
     }
 
     private void readAmplitude() {
