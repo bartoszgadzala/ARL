@@ -19,4 +19,26 @@ public interface Recorder {
      * Definitely stops recorder - it cannot be started again. All audio resources will be released.
      */
     void stop();
+
+    /**
+     * Checks if recording is started.
+     *
+     * @return <code>true</code> if recording is started
+     */
+    boolean isStarted();
+
+    /**
+     * Checks if recording is active (may be paused).
+     *
+     * @return <code>true</code> if recording is active (recorder is started or paused)
+     */
+    boolean isRecording();
+
+    /**
+     * Gets value of the max amplitude for read samples. Stored amplitude will be
+     * immediately zeroed - till next sample is read.
+     *
+     * @return value of max amplitude of read samples
+     */
+    int getMaxAmplitude();
 }

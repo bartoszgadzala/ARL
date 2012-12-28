@@ -39,6 +39,10 @@ public abstract class AbstractRecorder implements Recorder, Runnable {
      * Buffer for raw PCM data.
      */
     protected byte[] mPcmBuffer;
+    /**
+     * Max amplitude of read samples.
+     */
+    private int mAmplitude;
 
     public AbstractRecorder(AudioRecord audioRecord, RandomAccessFile out) {
         if (audioRecord == null) {
@@ -55,11 +59,13 @@ public abstract class AbstractRecorder implements Recorder, Runnable {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void start() {
         if (mAudioRecord == null) {
             throw new IllegalStateException("Audio recorder is already stopped");
         }
         mStarted.set(true);
+        mAmplitude = 0;
         if (!mRecording.getAndSet(true)) {
             Thread t = new Thread(this, "AudioRecorderTask");
             t.start();
@@ -69,16 +75,19 @@ public abstract class AbstractRecorder implements Recorder, Runnable {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void pause() {
         if (mAudioRecord == null) {
             throw new IllegalStateException("Audio recorder is already stopped");
         }
         mStarted.set(false);
+        mAmplitude = 0;
     }
 
     /**
      * {@inheritDoc}
      */
+    @Override
     public void stop() {
         if (mAudioRecord == null) {
             throw new IllegalStateException("Audio recorder is already stopped");
@@ -86,6 +95,32 @@ public abstract class AbstractRecorder implements Recorder, Runnable {
         mRecording.set(false);
         pause();
         stopAudioRecorder();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isStarted() {
+        return mStarted.get();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isRecording() {
+        return mRecording.get();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getMaxAmplitude() {
+        int result = mAmplitude;
+        mAmplitude = 0;
+        return result;
     }
 
     /**
@@ -104,6 +139,7 @@ public abstract class AbstractRecorder implements Recorder, Runnable {
                     if (readSize < 0) {
                         throw new IllegalStateException("AudioRecorder returned [" + readSize + "] bytes");
                     } else if (readSize > 0) {
+                        readAmplitude();
                         onSampleRead(mPcmBuffer, readSize);
                     }
                 } else {
@@ -171,5 +207,24 @@ public abstract class AbstractRecorder implements Recorder, Runnable {
         }
 
         Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
+    }
+
+    private void readAmplitude() {
+        if (mAudioRecord.getAudioFormat() == AudioFormat.ENCODING_PCM_16BIT) {
+            // 16bit sample size
+            for (int i = 0; i < mPcmBuffer.length / 2; i++) {
+                short curSample = (short) (mPcmBuffer[i * 2] | mPcmBuffer[i * 2 + 1] << 8);
+                if (curSample > mAmplitude) {
+                    mAmplitude = curSample;
+                }
+            }
+        } else if (mAudioRecord.getAudioFormat() == AudioFormat.ENCODING_PCM_8BIT) {
+            // 8bit sample size
+            for (int i = 0; i < mPcmBuffer.length; i++) {
+                if (mPcmBuffer[i] > mAmplitude) {
+                    mAmplitude = 0xff & mPcmBuffer[i];
+                }
+            }
+        }
     }
 }
