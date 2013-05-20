@@ -7,7 +7,9 @@ import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 import android.widget.*;
+import pl.bgadzala.arl.AudioStream;
 import pl.bgadzala.arl.Format;
+import pl.bgadzala.arl.RAFAudioStream;
 import pl.bgadzala.arl.Recorder;
 
 import java.io.File;
@@ -142,10 +144,10 @@ public class DemoActivity extends Activity implements AdapterView.OnItemSelected
         Log.i(TAG, status);
     }
 
-    private RandomAccessFile getOutputFile(Format outputFormat) {
+    private AudioStream getOutputFile(Format outputFormat) {
         File out = new File(getExternalStorageDirectoryForWriting(), String.format("arldemo.%s", outputFormat.getFileExtension()));
         try {
-            return new RandomAccessFile(out, "rw");
+            return new RAFAudioStream(new RandomAccessFile(out, "rw"));
         } catch (FileNotFoundException ex) {
             throw new IllegalStateException("Cannot create output file for [" + outputFormat + "] format", ex);
         }

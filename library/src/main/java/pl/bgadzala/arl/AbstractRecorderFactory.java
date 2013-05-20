@@ -13,7 +13,7 @@ public abstract class AbstractRecorderFactory implements RecorderFactory {
     /**
      * {@inheritDoc}
      */
-    public Recorder createRecorder(int audioSource, RandomAccessFile out) {
+    public Recorder createRecorder(int audioSource, AudioStream out) {
         return createRecorder(AudioRecordFactory.createForBestQuality(audioSource), out);
     }
 

@@ -16,7 +16,7 @@ public class WavRecorderFactory extends AbstractRecorderFactory {
      * @param out         output WAV file
      * @return audio recorder for WAV file format
      */
-    public WavRecorder createRecorder(AudioRecord audioRecord, RandomAccessFile out) {
+    public WavRecorder createRecorder(AudioRecord audioRecord, AudioStream out) {
         return new WavRecorder(audioRecord, out);
     }
 }

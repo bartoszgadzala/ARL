@@ -42,7 +42,7 @@ public enum Format {
      * @param out         output file
      * @return audio recorder for specified audio source
      */
-    public Recorder createRecorder(int audioSource, RandomAccessFile out) {
+    public Recorder createRecorder(int audioSource, AudioStream out) {
         return mFactory.createRecorder(audioSource, out);
     }
 
@@ -53,7 +53,7 @@ public enum Format {
      * @param out         output file
      * @return audio recorder
      */
-    public Recorder createRecorder(AudioRecord audioRecord, RandomAccessFile out) {
+    public Recorder createRecorder(AudioRecord audioRecord, AudioStream out) {
         return mFactory.createRecorder(audioRecord, out);
     }
 }

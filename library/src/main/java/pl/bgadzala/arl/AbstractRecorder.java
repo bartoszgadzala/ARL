@@ -34,7 +34,7 @@ public abstract class AbstractRecorder implements Recorder, Runnable {
     /**
      * Output stream for recorded audio.
      */
-    protected RandomAccessFile mOutput;
+    protected AudioStream mOutput;
     /**
      * Buffer for raw PCM data.
      */
@@ -44,7 +44,7 @@ public abstract class AbstractRecorder implements Recorder, Runnable {
      */
     private int mAmplitude;
 
-    public AbstractRecorder(AudioRecord audioRecord, RandomAccessFile out) {
+    public AbstractRecorder(AudioRecord audioRecord, AudioStream out) {
         if (audioRecord == null) {
             throw new NullPointerException("Audio recorder is mandatory");
         } else if (out == null) {
