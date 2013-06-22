@@ -4,7 +4,6 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.os.Process;
 
-import java.io.RandomAccessFile;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -19,15 +18,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class AbstractRecorder implements Recorder, Runnable {
 
     /**
-     * <code>true</code> if recording is started
-     */
-    private AtomicBoolean mStarted = new AtomicBoolean(false);
-    /**
-     * Controls recording task - setting to <code>false</code> finishes tasks.
-     */
-    private AtomicBoolean mRecording = new AtomicBoolean(false);
-
-    /**
      * Wrapped audio recorder.
      */
     protected AudioRecord mAudioRecord;
@@ -39,6 +29,14 @@ public abstract class AbstractRecorder implements Recorder, Runnable {
      * Buffer for raw PCM data.
      */
     protected byte[] mPcmBuffer;
+    /**
+     * <code>true</code> if recording is started
+     */
+    private AtomicBoolean mStarted = new AtomicBoolean(false);
+    /**
+     * Controls recording task - setting to <code>false</code> finishes tasks.
+     */
+    private AtomicBoolean mRecording = new AtomicBoolean(false);
     /**
      * Max amplitude of read samples.
      */
@@ -129,16 +127,21 @@ public abstract class AbstractRecorder implements Recorder, Runnable {
         startAudioRecorder();
         onRecordingStarted();
 
+        int invalidSize = 0;
         try {
             int readSize;
             while (mRecording.get()) {
                 if (mStarted.get()) {
                     readSize = mAudioRecord.read(mPcmBuffer, 0, mPcmBuffer.length);
                     if (readSize < 0) {
-                        throw new IllegalStateException("AudioRecorder returned [" + readSize + "] bytes");
+                        invalidSize++;
                     } else if (readSize > 0) {
+                        invalidSize = 0;
                         readAmplitude();
                         onSampleRead(mPcmBuffer, readSize);
+                    }
+                    if (invalidSize >= 10) {
+                        throw new RuntimeException("AudioRecorder returned [" + readSize + "] bytes");
                     }
                 } else {
                     try {
@@ -206,7 +209,7 @@ public abstract class AbstractRecorder implements Recorder, Runnable {
         }
 
         Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
-        
+
         mRecording.set(false);
         mStarted.set(false);
         mAmplitude = 0;
