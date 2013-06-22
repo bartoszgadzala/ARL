@@ -78,9 +78,10 @@ public class WavRecorder extends AbstractRecorder {
             mOutput.write(Integer.reverseBytes(mPayloadSize + 36));
             mOutput.seek(40); // Write size to Subchunk2Size field
             mOutput.write(Integer.reverseBytes(mPayloadSize));
-            mOutput.close();
         } catch (Exception ex) {
             throw new RuntimeException("Error while closing WAV file", ex);
+        } finally {
+            mOutput.close();
         }
     }
 }
